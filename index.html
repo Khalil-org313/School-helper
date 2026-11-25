@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع المدرسة الإلكتروني</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding-bottom: 70px; }
+        
+        /* شريط التنبيهات العلوي */
+        .top-bar { background: #222; color: #fff; padding: 5px 15px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .marquee-container { background: #d9534f; color: white; padding: 8px; font-weight: bold; overflow: hidden; white-space: nowrap; }
+        .marquee-container marquee { font-size: 15px; }
+
+        /* شاشة تسجيل الدخول */
+        #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: #eef2f7; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000; }
+        .login-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .login-box h2 { margin-bottom: 20px; color: #0275d8; }
+        .login-box input, .login-box select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .login-box button { background: #0275d8; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .login-box button:hover { background: #025aa2; }
+
+        /* الأقسام الرئيسية */
+        .section { display: none; padding: 20px; max-width: 800px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .section.active { display: block; }
+        h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #0275d8; padding-bottom: 5px; }
+
+        /* الشريط السفلي */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 999; }
+        .nav-btn { background: none; border: none; color: white; font-size: 14px; cursor: pointer; text-align: center; }
+        .nav-btn:hover { color: #3498db; }
+
+        /* لوحة تحكم المطور */
+        .dev-card { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة تسجيل الدخول -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>تسجيل دخول المدرـسة</h2>
+            <select id="user-type">
+                <option value="student">طالب</option>
+                <option value="teacher">أستاذ / إداري</option>
+                <option value="dev">مطور النظام</option>
+            </select>
+            <input type="password" id="passcode" placeholder="أدخل كلمة المرور أو الرمز السري">
+            <button onclick="login()">دخول</button>
+            <p id="error-msg" style="color: red; margin-top: 10px; font-size: 13px;"></p>
+        </div>
+    </div>
+
+    <!-- الشريط العلوي -->
+    <div class="top-bar">
+        <span id="live-time">التاريخ والوقت</span>
+        <button onclick="logout()" style="background:none; border:1px solid white; color:white; padding:2px 8px; cursor:pointer; border-radius:3px;">تسجيل خروج</button>
+    </div>
+    <div class="marquee-container">
+        <marquee id="urgent-news">أهلاً بكم في الموقع الرسمي للمدرسة. تابعوا أحدث الأخبار والتعاميم هنا.</marquee>
+    </div>
+
+    <!-- 1. واجهة الأخبار -->
+    <div id="sec-news" class="section active">
+        <h3>أخبار المدرسة</h3>
+        <p>لا توجد أخبار جديدة حالياً.</p>
+        <div id="add-news-box" style="display:none; margin-top:15px;">
+            <input type="text" id="new-news-text" placeholder="اكتب خبراً جديداً للنشر..." style="width:70%; padding:8px;">
+            <button onclick="publishNews()" style="padding:8px 15px; background:#5cb85c; color:white; border:none; border-radius:4px;">نشر</button>
+        </div>
+    </div>
+
+    <!-- 2. قسم الوظائف -->
+    <div id="sec-homework" class="section">
+        <h3>قسم الوظائف اليومية</h3>
+        <p>قائمة الوظائف المطلوبة لليوم التالي:</p>
+        <div id="add-hw-box" style="display:none; margin-top:15px;">
+            <input type="text" id="new-hw-text" placeholder="اكتب وظائف صف معين..." style="width:70%; padding:8px;">
+            <button onclick="publishHW()" style="padding:8px 15px; background:#5cb85c; color:white; border:none; border-radius:4px;">إضافة وظيفة</button>
+        </div>
+    </div>
+
+    <!-- 3. قسم النتائج -->
+    <div id="sec-results" class="section">
+        <h3>قسم النتائج الامتحانية</h3>
+        <p id="results-status" style="color: #d9534f; font-weight: bold;">النتائج مغلقة حالياً، ستفتح في يوم النتائج المحدد من قبل الإدارة.</p>
+    </div>
+
+    <!-- 4. قسم جدول الدروس -->
+    <div id="sec-schedule" class="section">
+        <h3>جدول الدروس (من السابع للحادي عشر - شعبتين لكل صف)</h3>
+        <p>اختر الصف والشعبة لعرض الجدول الدراسي.</p>
+    </div>
+
+    <!-- 5. قسم الأساتذة والإداريين (محمي) -->
+    <div id="sec-teachers-only" class="section">
+        <h3>قسم الكادر التدريسي (جدول المراقبة والاجتماعات)</h3>
+        <p>هذا القسم خاص بالأساتذة والإداريين فقط للمراقبات والتعاميم الداخلية.</p>
+    </div>
+
+    <!-- 6. قسم المطورين (خاص بالمطور) -->
+    <div id="sec-dev" class="section" style="display:none;">
+        <h3>قسم المطورين ولوحة التحكم</h3>
+        <div class="dev-card">
+            <p><strong>المطورون:</strong> خليل محمد _khalil muhammad</p>
+            <p><strong>غرفة عمليات الرد الإلكتروني</strong></p>
+            <p><strong>إنستغرام المطور:</strong> Kh31-3</p>
+        </div>
+        <div class="dev-card" style="margin-top: 15px;">
+            <h4>إعدادات المطور السريعة:</h4>
+            <input type="text" id="custom-marquee" placeholder="تعديل نص الشريط الأحمر..." style="width:70%; padding:8px; margin-top:5px;">
+            <button onclick="updateMarquee()" style="padding:8px; background:#0275d8; color:white; border:none;">تحديث الشريط</button>
+        </div>
+    </div>
+
+    <!-- الشريط السفلي للتنقل -->
+    <div class="bottom-nav">
+        <button class="nav-btn" onclick="showSection('sec-news')">🏠 الأخبار</button>
+        <button class="nav-btn" onclick="showSection('sec-homework')">📚 الوظائف</button>
+        <button class="nav-btn" onclick="showSection('sec-results')">📊 النتائج</button>
+        <button class="nav-btn" onclick="showSection('sec-schedule')">📅 الجداول</button>
+        <button class="nav-btn" id="btn-teacher-sec" onclick="showSection('sec-teachers-only')" style="display:none;">📋 الأساتذة</button>
+        <button class="nav-btn" id="btn-dev-sec" onclick="showSection('sec-dev')" style="display:none;">⚙️ المطور</button>
+    </div>
+
+    <script>
+        // تحديث الوقت والتاريخ تلقائياً
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-time').innerText = now.toLocaleString('ar-SY');
+        }, 1000);
+
+        // دالة تسجيل الدخول بناءً على كلمات المرور المحددة
+        function login() {
+            const type = document.getElementById('user-type').value;
+            const pass = document.getElementById('passcode').value;
+            const errorMsg = document.getElementById('error-msg');
+
+            let authenticated = false;
+
+            if (type === 'student' && pass === '468764') {
+                authenticated = true;
+                // إخفاء الأقسام الخاصة
+                document.getElementById('btn-teacher-sec').style.display = 'none';
+                document.getElementById('btn-dev-sec').style.display = 'none';
+                document.getElementById('add-news-box').style.display = 'none';
+                document.getElementById('add-hw-box').style.display = 'none';
+            } 
+            else if (type === 'teacher' && pass === '898643') {
+                authenticated = true;
+                // إظهار أقسام الأساتذة والنشر
+                document.getElementById('btn-teacher-sec').style.display = 'inline-block';
+                document.getElementById('btn-dev-sec').style.display = 'none';
+                document.getElementById('add-news-box').style.display = 'block';
+                document.getElementById('add-hw-box').style.display = 'block';
+            } 
+            else if (type === 'dev' && pass === '4643454') {
+                authenticated = true;
+                // إظهار كافة الصلاحيات للمطور
+                document.getElementById('btn-teacher-sec').style.display = 'inline-block';
+                document.getElementById('btn-dev-sec').style.display = 'inline-block';
+                document.getElementById('add-news-box').style.display = 'block';
+                document.getElementById('add-hw-box').style.display = 'block';
+                document.getElementById('sec-dev').style.display = 'block';
+            } 
+            else if (pass === '4643454') { // لو أدخل المطور الرمز من أي مكان
+                authenticated = true;
+                document.getElementById('btn-teacher-sec').style.display = 'inline-block';
+                document.getElementById('btn-dev-sec').style.display = 'inline-block';
+                document.getElementById('add-news-box').style.display = 'block';
+                document.getElementById('add-hw-box').style.display = 'block';
+            }
+
+            if (authenticated) {
+                document.getElementById('login-screen').style.display = 'none';
+            } else {
+                errorMsg.innerText = 'كلمة المرور أو الرمز غير صحيح!';
+            }
+        }
+
+        function logout() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('passcode').value = '';
+            document.getElementById('error-msg').innerText = '';
+        }
+
+        // التنقل بين الواجهات
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // تحديث الشريط الأحمر العاجل (للمطور)
+        function updateMarquee() {
+            const text = document.getElementById('custom-marquee').value;
+            if(text) {
+                document.getElementById('urgent-news').innerText = text;
+                alert('تم تحديث الشريط الأحمر بنجاح!');
+            }
+        }
+
+        function publishNews() {
+            alert('تم نشر الخبر بنجاح!');
+        }
+
+        function publishHW() {
+            alert('تم إضافة الوظيفة بنجاح!');
+        }
+    </script>
+</body>
+  </html>
+          
